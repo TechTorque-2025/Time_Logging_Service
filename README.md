@@ -1,5 +1,7 @@
 # ⏱️ Time Logging Service
 
+[![Build and Test Time Logging Service](https://github.com/TechTorque-2025/Time_Logging_Service/actions/workflows/buildtest.yaml/badge.svg)](https://github.com/TechTorque-2025/Time_Logging_Service/actions/workflows/buildtest.yaml)
+
 This microservice is responsible for tracking all work hours logged by employees against specific services and projects.
 
 **Assigned Team:** Dhanuja, Mahesh
