@@ -1,0 +1,2 @@
+org.springframework.context.ApplicationContextInitializer=\
+com.techtorque.timelogging_service.config.DatabasePreflightInitializer
