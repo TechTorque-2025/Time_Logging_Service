@@ -8,7 +8,7 @@ import org.springframework.boot.autoconfigure.security.servlet.UserDetailsServic
 public class TimeLoggingServiceApplication {
 
 	public static void main(String[] args) {
-		SpringApplication.run(TimeLoggingServiceApplication.class, args);
+		SpringApplication.run(TimeLoggingServiceApplication.class, args)
 	}
 
 }
