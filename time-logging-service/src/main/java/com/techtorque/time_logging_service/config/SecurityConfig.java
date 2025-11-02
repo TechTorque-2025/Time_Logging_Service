@@ -1,5 +1,6 @@
 package com.techtorque.time_logging_service.config;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
@@ -14,14 +15,21 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @EnableMethodSecurity(prePostEnabled = true)
 public class SecurityConfig {
 
-    // A more comprehensive whitelist for Swagger/OpenAPI, based on the auth-service config.
-    private static final String[] SWAGGER_WHITELIST = {
+    @Value("${app.security.enabled:true}")
+    private boolean securityEnabled;
+
+    // A more comprehensive whitelist for Swagger/OpenAPI, actuator, and public endpoints
+    private static final String[] PUBLIC_WHITELIST = {
         "/v3/api-docs/**",
         "/swagger-ui/**",
         "/swagger-ui.html",
         "/swagger-resources/**",
         "/webjars/**",
-        "/api-docs/**"
+        "/api-docs/**",
+        "/actuator/**",
+        "/health",
+        "/favicon.ico",
+        "/error"
     };
 
     @Bean
@@ -35,19 +43,22 @@ public class SecurityConfig {
             
             // Explicitly disable form login and HTTP Basic authentication
             .formLogin(formLogin -> formLogin.disable())
-            .httpBasic(httpBasic -> httpBasic.disable())
-            
-            // Set up authorization rules
-            .authorizeHttpRequests(authz -> authz
-                // Permit all requests to the Swagger UI and API docs paths
-                .requestMatchers(SWAGGER_WHITELIST).permitAll()
-                
-                // All other requests must be authenticated
+            .httpBasic(httpBasic -> httpBasic.disable());
+
+        // Configure authorization rules based on security setting
+        if (securityEnabled) {
+            // Production mode: require authentication except for public paths
+            http.authorizeHttpRequests(authz -> authz
+                .requestMatchers(PUBLIC_WHITELIST).permitAll()
                 .anyRequest().authenticated()
             )
-
-            // Add our custom filter to read headers from the Gateway
             .addFilterBefore(new GatewayHeaderFilter(), UsernamePasswordAuthenticationFilter.class);
+        } else {
+            // Development mode: allow all requests
+            http.authorizeHttpRequests(authz -> authz
+                .anyRequest().permitAll()
+            );
+        }
 
         return http.build();
     }
