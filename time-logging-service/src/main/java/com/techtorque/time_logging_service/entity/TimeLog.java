@@ -29,13 +29,19 @@ public class TimeLog {
   @Column(nullable = false, updatable = false)
   private String serviceId; // Can also be a projectId
 
+  // Added nullable projectId so a time log can be associated with either a project or a service
+  @Column(nullable = true)
+  private String projectId;
+
+
+
   @Column(nullable = false)
   private double hours;
 
   @Column(nullable = false)
   private LocalDate date; // The date the work was performed
 
-  @Lob
+  @Column(columnDefinition = "TEXT")
   private String description;
 
   private String workType;
@@ -47,4 +53,74 @@ public class TimeLog {
   @UpdateTimestamp
   @Column(nullable = false)
   private LocalDateTime updatedAt;
+
+  // Explicit getters - Lombok @Data should generate these, but we make them explicit
+  public String getId() {
+    return id;
+  }
+
+  public String getEmployeeId() {
+    return employeeId;
+  }
+
+  public String getServiceId() {
+    return serviceId;
+  }
+
+  public String getProjectId() {
+    return projectId;
+  }
+
+  public double getHours() {
+    return hours;
+  }
+
+  public LocalDate getDate() {
+    return date;
+  }
+
+  public String getDescription() {
+    return description;
+  }
+
+  public String getWorkType() {
+    return workType;
+  }
+
+  public LocalDateTime getCreatedAt() {
+    return createdAt;
+  }
+
+  public LocalDateTime getUpdatedAt() {
+    return updatedAt;
+  }
+
+  // Explicit setters - Lombok @Data should generate these, but we make them explicit
+  public void setEmployeeId(String employeeId) {
+    this.employeeId = employeeId;
+  }
+
+  public void setServiceId(String serviceId) {
+    this.serviceId = serviceId;
+  }
+
+  public void setProjectId(String projectId) {
+    this.projectId = projectId;
+  }
+
+  public void setHours(double hours) {
+    this.hours = hours;
+  }
+
+  public void setDate(LocalDate date) {
+    this.date = date;
+  }
+
+  public void setDescription(String description) {
+    this.description = description;
+  }
+
+  public void setWorkType(String workType) {
+    this.workType = workType;
+  }
 }

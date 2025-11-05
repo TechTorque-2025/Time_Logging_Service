@@ -1,4 +1,4 @@
-package com.techtorque.timelogging_service.config;
+package com.techtorque.time_logging_service.config;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -42,3 +42,4 @@ public class DatabasePreflightInitializer implements ApplicationContextInitializ
     }
   }
 }
+
