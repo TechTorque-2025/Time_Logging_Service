@@ -1,5 +1,7 @@
 package com.techtorque.time_logging_service.config;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -9,6 +11,10 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+
+import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.Map;
 
 @Configuration
 @EnableWebSecurity
@@ -52,7 +58,23 @@ public class SecurityConfig {
                 .requestMatchers(PUBLIC_WHITELIST).permitAll()
                 .anyRequest().authenticated()
             )
-            .addFilterBefore(new GatewayHeaderFilter(), UsernamePasswordAuthenticationFilter.class);
+            .addFilterBefore(new GatewayHeaderFilter(), UsernamePasswordAuthenticationFilter.class)
+            .exceptionHandling(exceptionHandling -> exceptionHandling
+                .accessDeniedHandler((request, response, accessDeniedException) -> {
+                    response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                    response.setContentType("application/json");
+                    
+                    Map<String, Object> errorResponse = new HashMap<>();
+                    errorResponse.put("status", 403);
+                    errorResponse.put("error", "Forbidden");
+                    errorResponse.put("message", "Access denied: " + accessDeniedException.getMessage());
+                    errorResponse.put("path", request.getRequestURI());
+                    errorResponse.put("timestamp", LocalDateTime.now().toString());
+                    
+                    ObjectMapper mapper = new ObjectMapper();
+                    response.getWriter().write(mapper.writeValueAsString(errorResponse));
+                })
+            );
         } else {
             // Development mode: allow all requests
             http.authorizeHttpRequests(authz -> authz
