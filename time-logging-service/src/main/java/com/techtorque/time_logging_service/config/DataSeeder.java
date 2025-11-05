@@ -64,41 +64,53 @@ public class DataSeeder implements CommandLineRunner {
     /**
      * Seed sample time log entries for testing
      * Creates realistic test data for 3 employees over the past 7 days
+     * 
+     * UPDATED: Now uses SharedConstants for consistent employee IDs that match Auth service
      */
     private void seedSampleTimeLogs() {
-        // Sample employee IDs (these would correspond to real users from Auth service)
-        String[] employees = {"EMP001", "EMP002", "EMP003"};
+        // Use actual employee UUIDs from Auth service (via SharedConstants)
+        String[] employees = {
+            SharedConstants.UserIds.EMPLOYEE_1,
+            SharedConstants.UserIds.EMPLOYEE_2,
+            SharedConstants.UserIds.EMPLOYEE_3
+        };
 
-        // Sample work types
+        // Work types from SharedConstants
         String[] workTypes = {
-            "Development",
-            "Testing",
-            "Code Review",
-            "Meetings",
-            "Documentation",
-            "Bug Fixing",
-            "Planning"
+            SharedConstants.WorkTypes.DIAGNOSTIC,
+            SharedConstants.WorkTypes.REPAIR,
+            SharedConstants.WorkTypes.MAINTENANCE,
+            SharedConstants.WorkTypes.INSTALLATION,
+            SharedConstants.WorkTypes.INSPECTION,
+            SharedConstants.WorkTypes.TESTING
         };
 
-        // Sample project IDs
+        // Use service and project IDs from SharedConstants
         String[] projects = {
-            "PRJ001", "PRJ002", "PRJ003", "PRJ004", "PRJ005"
+            SharedConstants.ProjectIds.PROJECT_1,
+            SharedConstants.ProjectIds.PROJECT_2,
+            SharedConstants.ProjectIds.PROJECT_3,
+            SharedConstants.ProjectIds.PROJECT_4,
+            SharedConstants.ProjectIds.PROJECT_5
         };
 
-        // Sample service IDs
         String[] services = {
-            "SRV001", "SRV002", "SRV003", "SRV004", "SRV005"
+            SharedConstants.ServiceIds.SERVICE_1,
+            SharedConstants.ServiceIds.SERVICE_2,
+            SharedConstants.ServiceIds.SERVICE_3,
+            SharedConstants.ServiceIds.SERVICE_4,
+            SharedConstants.ServiceIds.SERVICE_5
         };
 
         // Sample descriptions
         String[] descriptions = {
-            "Implemented new feature for customer dashboard",
-            "Fixed critical bug in payment processing",
-            "Reviewed pull requests from team members",
-            "Attended daily standup and sprint planning",
-            "Updated API documentation",
-            "Refactored legacy code for better performance",
-            "Set up CI/CD pipeline for automated testing"
+            "Diagnosed engine issue and identified faulty spark plugs",
+            "Completed brake pad replacement on front wheels",
+            "Performed routine oil change and filter replacement",
+            "Installed new alternator and tested charging system",
+            "Conducted comprehensive vehicle safety inspection",
+            "Repaired exhaust system leak at manifold joint",
+            "Performed wheel alignment and tire rotation"
         };
 
         LocalDate today = LocalDate.now();
