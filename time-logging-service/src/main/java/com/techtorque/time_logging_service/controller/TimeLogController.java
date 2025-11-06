@@ -88,21 +88,37 @@ public class TimeLogController {
     @ApiResponse(responseCode = "403", description = "Forbidden")
   })
   @GetMapping
-  @PreAuthorize("hasRole('EMPLOYEE')")
+  @PreAuthorize("hasAnyRole('EMPLOYEE', 'ADMIN')")
   public ResponseEntity<List<TimeLogResponse>> getMyTimeLogs(
           @Parameter(description = "Employee ID from authentication token", required = true)
-          @RequestHeader("X-User-Subject") String employeeId,
+          @RequestHeader("X-User-Subject") String userId,
+          @RequestHeader("X-User-Roles") String roles,
           @Parameter(description = "Start date for filtering (YYYY-MM-DD)")
           @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
           @Parameter(description = "End date for filtering (YYYY-MM-DD)")
           @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
     
     List<TimeLogResponse> responses;
-    if (from != null && to != null) {
-      responses = timeLogService.getTimeLogsByDateRange(employeeId, from, to);
+    
+    // Admin can see all time logs
+    if (roles.contains("ADMIN")) {
+      if (from != null && to != null) {
+        // For admin with date range, get all logs and filter (or create new method)
+        responses = timeLogService.getAllTimeLogs().stream()
+            .filter(log -> !log.getDate().isBefore(from) && !log.getDate().isAfter(to))
+            .collect(java.util.stream.Collectors.toList());
+      } else {
+        responses = timeLogService.getAllTimeLogs();
+      }
     } else {
-      responses = timeLogService.getAllTimeLogsByEmployee(employeeId);
+      // Employee sees only their own logs
+      if (from != null && to != null) {
+        responses = timeLogService.getTimeLogsByDateRange(userId, from, to);
+      } else {
+        responses = timeLogService.getAllTimeLogsByEmployee(userId);
+      }
     }
+    
     return ResponseEntity.ok(responses);
   }
 
