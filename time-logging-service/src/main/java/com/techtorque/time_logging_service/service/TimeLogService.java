@@ -123,6 +123,19 @@ public class TimeLogService {
   }
 
   /**
+   * Get all time logs (admin access)
+   * 
+   * @return List of all time log responses
+   */
+  public List<TimeLogResponse> getAllTimeLogs() {
+    logger.info("Fetching all time logs (admin access)");
+    return timeLogRepository.findAll()
+            .stream()
+            .map(TimeLogMapper::toResponse)
+            .collect(Collectors.toList());
+  }
+
+  /**
    * Get time logs for an employee within a date range
    * 
    * @param employeeId Employee ID
