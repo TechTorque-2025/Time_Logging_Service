@@ -4,6 +4,7 @@ import com.techtorque.time_logging_service.dto.request.TimeLogRequest;
 import com.techtorque.time_logging_service.dto.request.TimeLogUpdateRequest;
 import com.techtorque.time_logging_service.dto.response.TimeLogResponse;
 import com.techtorque.time_logging_service.dto.response.TimeLogSummaryResponse;
+import com.techtorque.time_logging_service.exception.UnauthorizedAccessException;
 import com.techtorque.time_logging_service.service.TimeLogService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -63,12 +64,12 @@ public class TimeLogController {
     @ApiResponse(responseCode = "403", description = "Forbidden - insufficient permissions")
   })
   @PostMapping
-  @PreAuthorize("hasRole('EMPLOYEE')")
+  @PreAuthorize("hasAnyRole('EMPLOYEE', 'ADMIN', 'SUPER_ADMIN')")
   public ResponseEntity<TimeLogResponse> createTimeLog(
           @Parameter(description = "Employee ID from authentication token", required = true)
           @RequestHeader(value = "X-User-Subject") String employeeId,
           @Valid @RequestBody TimeLogRequest request) {
-    
+
     TimeLogResponse response = timeLogService.createTimeLog(employeeId, request);
     return ResponseEntity.status(HttpStatus.CREATED).body(response);
   }
@@ -88,7 +89,7 @@ public class TimeLogController {
     @ApiResponse(responseCode = "403", description = "Forbidden")
   })
   @GetMapping
-  @PreAuthorize("hasAnyRole('EMPLOYEE', 'ADMIN')")
+  @PreAuthorize("hasAnyRole('EMPLOYEE', 'ADMIN', 'SUPER_ADMIN')")
   public ResponseEntity<List<TimeLogResponse>> getMyTimeLogs(
           @Parameter(description = "Employee ID from authentication token", required = true)
           @RequestHeader("X-User-Subject") String userId,
@@ -97,11 +98,11 @@ public class TimeLogController {
           @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
           @Parameter(description = "End date for filtering (YYYY-MM-DD)")
           @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
-    
+
     List<TimeLogResponse> responses;
-    
-    // Admin can see all time logs
-    if (roles.contains("ADMIN")) {
+
+    // Admin and Super Admin can see all time logs
+    if (roles.contains("ADMIN") || roles.contains("SUPER_ADMIN")) {
       if (from != null && to != null) {
         // For admin with date range, get all logs and filter (or create new method)
         responses = timeLogService.getAllTimeLogs().stream()
@@ -118,7 +119,7 @@ public class TimeLogController {
         responses = timeLogService.getAllTimeLogsByEmployee(userId);
       }
     }
-    
+
     return ResponseEntity.ok(responses);
   }
 
@@ -138,7 +139,7 @@ public class TimeLogController {
     @ApiResponse(responseCode = "404", description = "Time log not found")
   })
   @GetMapping("/{logId}")
-  @PreAuthorize("hasAnyRole('EMPLOYEE', 'ADMIN')")
+  @PreAuthorize("hasAnyRole('EMPLOYEE', 'ADMIN', 'SUPER_ADMIN')")
   public ResponseEntity<TimeLogResponse> getTimeLogById(
           @Parameter(description = "Time log ID", required = true)
           @PathVariable String logId,
@@ -146,7 +147,7 @@ public class TimeLogController {
           @RequestHeader(value = "X-User-Subject", required = false) String userId,
           @Parameter(description = "User role from authentication token")
           @RequestHeader(value = "X-User-Role", required = false) String userRole) {
-    
+
     TimeLogResponse response = timeLogService.getTimeLogByIdWithAuthorization(logId, userId, userRole);
     return ResponseEntity.ok(response);
   }
@@ -167,14 +168,14 @@ public class TimeLogController {
     @ApiResponse(responseCode = "404", description = "Time log not found")
   })
   @PutMapping("/{logId}")
-  @PreAuthorize("hasRole('EMPLOYEE')")
+  @PreAuthorize("hasAnyRole('EMPLOYEE', 'ADMIN', 'SUPER_ADMIN')")
   public ResponseEntity<TimeLogResponse> updateTimeLog(
           @Parameter(description = "Time log ID", required = true)
           @PathVariable String logId,
           @Parameter(description = "Employee ID from authentication token", required = true)
           @RequestHeader("X-User-Subject") String employeeId,
           @Valid @RequestBody TimeLogUpdateRequest request) {
-    
+
     TimeLogResponse response = timeLogService.updateTimeLogWithAuthorization(logId, employeeId, request);
     return ResponseEntity.ok(response);
   }
@@ -194,13 +195,20 @@ public class TimeLogController {
     @ApiResponse(responseCode = "404", description = "Time log not found")
   })
   @DeleteMapping("/{logId}")
-  @PreAuthorize("hasRole('EMPLOYEE')")
+  @PreAuthorize("hasAnyRole('EMPLOYEE', 'ADMIN', 'SUPER_ADMIN')")
   public ResponseEntity<Void> deleteTimeLog(
           @Parameter(description = "Time log ID", required = true)
           @PathVariable String logId,
-          @Parameter(description = "Employee ID from authentication token", required = true)
-          @RequestHeader("X-User-Subject") String employeeId) {
-    
+          @Parameter(description = "Employee ID from authentication token", required = false)
+          @RequestHeader(value = "X-User-Subject", required = false) String employeeId,
+          @Parameter(description = "User role from authentication token", required = false)
+          @RequestHeader(value = "X-User-Roles", required = false) String userRoles) {
+
+    // If header is missing, check if user is admin (can delete any log)
+    if (employeeId == null || employeeId.isEmpty()) {
+      throw new UnauthorizedAccessException("User identification missing. Please ensure you are logged in.");
+    }
+
     timeLogService.deleteTimeLogWithAuthorization(logId, employeeId);
     return ResponseEntity.noContent().build();
   }
@@ -246,7 +254,7 @@ public class TimeLogController {
     @ApiResponse(responseCode = "403", description = "Forbidden")
   })
   @GetMapping("/summary")
-  @PreAuthorize("hasRole('EMPLOYEE')")
+  @PreAuthorize("hasAnyRole('EMPLOYEE', 'ADMIN', 'SUPER_ADMIN')")
   public ResponseEntity<TimeLogSummaryResponse> getSummary(
           @Parameter(description = "Employee ID from authentication token", required = true)
           @RequestHeader("X-User-Subject") String employeeId,
@@ -254,7 +262,7 @@ public class TimeLogController {
           @RequestParam String period,
           @Parameter(description = "Reference date (YYYY-MM-DD)", required = true)
           @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
-    
+
     TimeLogSummaryResponse summary = timeLogService.getEmployeeSummaryByPeriod(employeeId, period, date);
     return ResponseEntity.ok(summary);
   }
@@ -288,11 +296,11 @@ public class TimeLogController {
     description = "Get quick statistics including total hours logged, number of logs, and breakdown by service/project."
   )
   @GetMapping("/stats")
-  @PreAuthorize("hasRole('EMPLOYEE')")
+  @PreAuthorize("hasAnyRole('EMPLOYEE', 'ADMIN', 'SUPER_ADMIN')")
   public ResponseEntity<Map<String, Object>> getEmployeeStats(
           @Parameter(description = "Employee ID from authentication token", required = true)
           @RequestHeader("X-User-Subject") String employeeId) {
-    
+
     Map<String, Object> stats = timeLogService.getEmployeeStatistics(employeeId);
     return ResponseEntity.ok(stats);
   }
