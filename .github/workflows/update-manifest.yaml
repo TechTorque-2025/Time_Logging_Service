@@ -40,18 +40,19 @@ jobs:
       
       - name: Update image tag in deployment manifest
         env:
-          SERVICE_NAME: "timelogging_service"  # e.g., "timelogging_service", "frontend_web", "authentication"
+          SERVICE_NAME: "time_logging_service"  # e.g., "timelogging_service", "frontend_web", "authentication"
           DEPLOYMENT_FILE: "timelogging-deployment.yaml"  # e.g., "timelogging-deployment.yaml", "frontend-deployment.yaml"
         run: |
           cd k8s-config
           NEW_IMAGE="ghcr.io/techtorque-2025/${SERVICE_NAME}:${{ steps.info.outputs.branch }}-${{ steps.info.outputs.sha }}"
-          
+          export NEW_IMAGE
+
           echo "🔄 Updating ${DEPLOYMENT_FILE} to use image: ${NEW_IMAGE}"
-          
+
           yq eval -i \
             '(select(.kind == "Deployment") | .spec.template.spec.containers[0].image) = env(NEW_IMAGE)' \
             k8s/services/${DEPLOYMENT_FILE}
-          
+
           echo "✅ Updated manifest:"
           yq eval 'select(.kind == "Deployment") | .spec.template.spec.containers[0].image' k8s/services/${DEPLOYMENT_FILE}
       
